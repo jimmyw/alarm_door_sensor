@@ -4,7 +4,7 @@
 
 /* Software UART TX on P60 (physical pin 11), open-drain with external pull-up. */
 
-static volatile unsigned short g_uart_sw_bit_delay_ticks = 64U;
+static volatile unsigned short g_uart_sw_bit_delay_ticks = 128U;
 
 static void tx_delay(void) {
   volatile unsigned short i;

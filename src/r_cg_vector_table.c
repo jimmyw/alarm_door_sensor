@@ -38,7 +38,7 @@ Global variables and functions
 /* Set option bytes */
 #define OPTION_SECT          __attribute__ ((section (".option_bytes")))
 const uint8_t Option_Bytes[] OPTION_SECT = 
-    {0x00U, 0xFFU, 0xAAU, 0x04U};
+    {0x00U, 0xFFU, 0xE9U, 0x04U};
 
 /* Set security ID */
 #define SECURITYID_SECT          __attribute__ ((section (".security_id")))
