@@ -56,3 +56,10 @@ add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
     COMMAND ${CMAKE_SIZE} --format=berkeley $<TARGET_FILE:${PROJECT_NAME}.elf>
     COMMENT "Generating ${PROJECT_NAME}.srec and printing size"
 )
+
+# ---------- Flash target ----------
+add_custom_target(flash
+    COMMAND rl78flash -viva -m1 /dev/ttyUSB0 ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.srec
+    DEPENDS ${PROJECT_NAME}.elf
+    COMMENT "Flashing ${PROJECT_NAME}.srec to /dev/ttyUSB0"
+)
