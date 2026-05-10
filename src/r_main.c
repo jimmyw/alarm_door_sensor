@@ -71,7 +71,7 @@ void R_MAIN_UserInit(void) {
 
   ADPC = 0x01U; // Turn all outputs into Digital
 
-  P2 = 0xff;
+  P2_bit.no2 = 1;
   PM2 = 0x00; // all output
 
   ///* Allow LOCO (low-speed oscillator) to keep running in STOP mode */
@@ -85,16 +85,12 @@ void R_MAIN_UserInit(void) {
   TMKAIF = 0U;            // clear any pending flag
   ITMC = 0x8000U | 7499U; // bit15=enable, lower 15 bits = compare value
   TMKAMK = 0U;            // unmask — ready to fire
-  P2 = 0x00;              // turn on LED on P2.2
+  P2_bit.no2 = 0;         // turn on LED on P2.2
 }
 
 /* IT interrupt handler — fires every 500ms */
 void INT_IT(void) {
-  if (P2 & 0x1) {
-    P2 = 0x00; // turn on LED on P2.0
-  } else {
-    P2 = 0xff; // turn off LED on P2.0
-  }
+  P2_bit.no2 = ~P2_bit.no2; // toggle LED on P2.2
 }
 
 /* Start user code for adding. Do not edit comment generated here */
