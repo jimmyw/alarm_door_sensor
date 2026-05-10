@@ -1,0 +1,23 @@
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR rl78)
+
+set(RENESAS_TOOLCHAIN_PATH "$ENV{HOME}/.local/share/renesas/e2_studio/toolchains/llvm-17.0.1.202512-rl78-elf/llvm-for-renesas-rl78")
+
+set(CMAKE_C_COMPILER   ${RENESAS_TOOLCHAIN_PATH}/bin/clang)
+set(CMAKE_ASM_COMPILER ${RENESAS_TOOLCHAIN_PATH}/bin/clang)
+set(CMAKE_OBJCOPY      ${RENESAS_TOOLCHAIN_PATH}/bin/llvm-objcopy)
+set(CMAKE_SIZE         ${RENESAS_TOOLCHAIN_PATH}/bin/llvm-size)
+
+set(TARGET_FLAGS "--target=rl78 -mcpu=s2")
+
+set(CMAKE_C_FLAGS_INIT "${TARGET_FLAGS}")
+set(CMAKE_ASM_FLAGS_INIT "${TARGET_FLAGS} -x assembler-with-cpp")
+
+set(CMAKE_EXE_LINKER_FLAGS_INIT "${TARGET_FLAGS} -nostartfiles -Wl,-e_PowerON_Reset -Wl,--gc-sections -Wl,--icf=none")
+
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
