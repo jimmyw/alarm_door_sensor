@@ -55,9 +55,9 @@ void R_MAIN_UserInit(void);
  ***********************************************************************************************************************/
 int main(void) {
   R_MAIN_UserInit();
-  // while (1) {
-  //  STOP(); // deep sleep, wakes on IT interrupt
-  //}
+  while (1) {
+    STOP(); // deep sleep, wakes on IT interrupt
+  }
   return 0;
 }
 
