@@ -51,14 +51,12 @@ void INT_WDTI(void) {}
 void INT_LVI(void) {}
 
 /*
- * INT_P0 (0x8)
+ * INT_P0 (0x8) — defined in r_main.c
  */
-void INT_P0(void) {}
 
 /*
- * INT_P1 (0xA)
+ * INT_P1 (0xA) — defined in r_main.c
  */
-void INT_P1(void) {}
 
 /*
  * INT_P2 (0xC)

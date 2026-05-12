@@ -64,7 +64,7 @@ static const uint8_t DEVICE_ID[4] = {0xDE, 0xAD, 0x00, 0x01};
 #define PKT_LEN 7
 
 static uint8_t build_packet(uint8_t *pkt) {
-  P2_bit.no0 = 0; // Pullup needs to be high to read switch state
+
   pkt[0] = DEVICE_ID[0];
   pkt[1] = DEVICE_ID[1];
   pkt[2] = DEVICE_ID[2];
@@ -75,7 +75,7 @@ static uint8_t build_packet(uint8_t *pkt) {
   for (uint8_t i = 0; i < 6; i++)
     chk ^= pkt[i];
   pkt[6] = chk;
-  P2_bit.no0 = 1; // restore LED state
+
   return PKT_LEN;
 }
 
@@ -151,28 +151,53 @@ void R_MAIN_UserInit(void) {
 
   PM4_bit.no1 = 1; /* P4.1 input — tamper switch */
 
+  /* INTP0 (P13.7 reed switch) — both edges */
+  EGP0_bit.no0 = 1; /* rising edge */
+  EGN0_bit.no0 = 1; /* falling edge */
+  PIF0 = 0U;        /* clear pending flag */
+  PMK0 = 0U;        /* unmask — enable INTP0 */
+
+  /* INTP1 (P4.1 tamper switch) — both edges */
+  EGP0_bit.no1 = 1; /* rising edge */
+  EGN0_bit.no1 = 1; /* falling edge */
+  PIF1 = 0U;        /* clear pending flag */
+  PMK1 = 0U;        /* unmask — enable INTP1 */
+
   R_CSI00_Start();
   cc1101_init();
   uartsw_puts("CC1101 init OK\r\n");
+
+  // Pull up for switches
+  P2_bit.no0 = 1; // Pullup needs to be high to read switch state
 }
 
-/* IT interrupt handler — fires every 500ms */
-void INT_IT(void) {
-  static uint8_t count = 0;
-  if (++count < 20)
-    return; /* 20 × 500ms = 10s */
-  count = 0;
-
+static void send_status(const char *reason) {
   uint8_t pkt[PKT_LEN];
   build_packet(pkt);
   cc1101_tx_packet(pkt, PKT_LEN);
 
-  uartsw_puts("TX T:");
+  uartsw_puts(reason);
+  uartsw_puts(" T:");
   uartsw_puthex(pkt[4]);
   uartsw_puts(" R:");
   uartsw_puthex(pkt[5]);
   uartsw_puts("\r\n");
 }
+
+/* IT interrupt handler — heartbeat every 5 min (600 × 500ms) */
+void INT_IT(void) {
+  static uint16_t count = 0;
+  if (++count < 600)
+    return;
+  count = 0;
+  send_status("HB");
+}
+
+/* Reed switch changed (P13.7) */
+void INT_P0(void) { send_status("REED"); }
+
+/* Tamper switch changed (P4.1) */
+void INT_P1(void) { send_status("TAMP"); }
 
 /* Start user code for adding. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
