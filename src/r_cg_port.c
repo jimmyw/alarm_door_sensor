@@ -52,10 +52,14 @@ Global variables and functions
  * Return Value : None
  ***********************************************************************************************************************/
 void R_PORT_Create(void) {
-  P2 = _00_Pn2_OUTPUT_0;
+  P2 = _00_Pn2_OUTPUT_0 | _00_Pn3_OUTPUT_0;
+  PMC1 = _01_PMCn0_NOT_USE | _02_PMCn1_NOT_USE | _04_PMCn2_NOT_USE |
+         _00_PMCn3_DI_ON | _00_PMCn4_DI_ON | _E0_PMC1_DEFAULT;
   ADPC = _03_ADPC_DI_ON;
+  PM1 = _01_PMn0_NOT_USE | _02_PMn1_NOT_USE | _04_PMn2_NOT_USE |
+        _08_PMn3_MODE_INPUT | _10_PMn4_MODE_INPUT | _E0_PM1_DEFAULT;
   PM2 = _01_PMn0_NOT_USE | _02_PMn1_NOT_USE | _00_PMn2_MODE_OUTPUT |
-        _08_PMn3_NOT_USE | _F0_PM2_DEFAULT;
+        _00_PMn3_MODE_OUTPUT | _F0_PM2_DEFAULT;
 
   R_PORT_Create_UserInit();
 }

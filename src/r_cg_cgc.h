@@ -58,8 +58,7 @@ Macro definitions (Register bit)
     Clock operation status control register (CSC)
 */
 /* Control of high-speed system clock operation (MSTOP) */
-#define _00_CGC_HISYS_OPER                                                     \
-  (0x00U)                          /* X1 oscillator/external clock operating   \
+#define _00_CGC_HISYS_OPER (0x00U) /* X1 oscillator/external clock operating   \
                                     */
 #define _80_CGC_HISYS_STOP (0x80U) /* X1 oscillator/external clock stopped */
 /* High-speed OCO operation (HIOSTOP) */
@@ -119,18 +118,14 @@ Macro definitions (Register bit)
 #define _80_CGC_ILLEGAL_ACCESS_ON                                              \
   (0x80U) /* enables illegal memory access detection */
 /* RAM guard area (GRAM1, GRAM0) */
-#define _00_CGC_RAM_GUARD_OFF                                                  \
-  (0x00U) /* invalid, it is possible to write RAM                              \
-           */
-#define _10_CGC_RAM_GUARD_ARAE0                                                \
-  (0x10U) /* 128 bytes from RAM bottom address                                 \
-           */
-#define _20_CGC_RAM_GUARD_ARAE1                                                \
-  (0x20U) /* 256 bytes from RAM bottom address                                 \
-           */
-#define _30_CGC_RAM_GUARD_ARAE2                                                \
-  (0x30U) /* 512 bytes from RAM bottom address                                 \
-           */
+#define _00_CGC_RAM_GUARD_OFF (0x00U) /* invalid, it is possible to write RAM  \
+                                       */
+#define _10_CGC_RAM_GUARD_ARAE0 (0x10U) /* 128 bytes from RAM bottom address   \
+                                         */
+#define _20_CGC_RAM_GUARD_ARAE1 (0x20U) /* 256 bytes from RAM bottom address   \
+                                         */
+#define _30_CGC_RAM_GUARD_ARAE2 (0x30U) /* 512 bytes from RAM bottom address   \
+                                         */
 /* PORT register guard (GPORT) */
 #define _00_CGC_PORT_GUARD_OFF                                                 \
   (0x00U) /* invalid, it is possible to write PORT register */
