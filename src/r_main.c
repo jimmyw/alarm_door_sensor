@@ -33,13 +33,13 @@
 /***********************************************************************************************************************
 Includes
 ***********************************************************************************************************************/
+#include "cc1101.h"
 #include "interrupt_handlers.h"
 #include "r_cg_cgc.h"
 #include "r_cg_macrodriver.h"
 #include "r_cg_port.h"
 #include "r_cg_serial.h"
 #include "uart_sw.h"
-#include "cc1101.h"
 #include <stddef.h>
 /* Start user code for include. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
@@ -50,6 +50,35 @@ Global variables and functions
 ***********************************************************************************************************************/
 /* Start user code for global. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
+
+/* Unique device serial number — change per device */
+static const uint8_t DEVICE_ID[4] = {0xDE, 0xAD, 0x00, 0x01};
+
+/*
+ * Packet format (7 bytes):
+ *   [0..3] Device ID  (4 bytes)
+ *   [4]    Tamper switch  (P4.1: 0=closed/OK, 1=open/tampered)
+ *   [5]    Reed switch    (P13.7: 0=closed/window shut, 1=open/window open)
+ *   [6]    Checksum       (XOR of bytes 0..5)
+ */
+#define PKT_LEN 7
+
+static uint8_t build_packet(uint8_t *pkt) {
+  P2_bit.no0 = 0; // Pullup needs to be high to read switch state
+  pkt[0] = DEVICE_ID[0];
+  pkt[1] = DEVICE_ID[1];
+  pkt[2] = DEVICE_ID[2];
+  pkt[3] = DEVICE_ID[3];
+  pkt[4] = P4_bit.no1;  /* tamper switch */
+  pkt[5] = P13_bit.no7; /* reed switch */
+  uint8_t chk = 0;
+  for (uint8_t i = 0; i < 6; i++)
+    chk ^= pkt[i];
+  pkt[6] = chk;
+  P2_bit.no0 = 1; // restore LED state
+  return PKT_LEN;
+}
+
 void R_MAIN_UserInit(void);
 
 /***********************************************************************************************************************
@@ -80,8 +109,9 @@ MD_STATUS R_CSI00_Send_Receive_Sync(uint8_t *const tx_buf, uint16_t tx_num,
     return MD_ARGERROR;
   }
 
-  CSIMK00 = 1U;                    // disable CSI00 interrupt — we poll instead
-  SMR00 &= ~_0001_SAU_BUFFER_EMPTY; // flag means "transfer complete", not "buffer empty"
+  CSIMK00 = 1U;                     // disable CSI00 interrupt — we poll instead
+  SMR00 &= ~_0001_SAU_BUFFER_EMPTY; // flag means "transfer complete", not
+                                    // "buffer empty"
 
   for (uint16_t i = 0; i < tx_num; i++) {
     CSIIF00 = 0U;                              // clear flag
@@ -119,6 +149,8 @@ void R_MAIN_UserInit(void) {
   ITMC = 0x8000U | 7499U; // bit15=enable, lower 15 bits = compare value
   TMKAMK = 0U;            // unmask — ready to fire
 
+  PM4_bit.no1 = 1; /* P4.1 input — tamper switch */
+
   R_CSI00_Start();
   cc1101_init();
   uartsw_puts("CC1101 init OK\r\n");
@@ -127,12 +159,19 @@ void R_MAIN_UserInit(void) {
 /* IT interrupt handler — fires every 500ms */
 void INT_IT(void) {
   static uint8_t count = 0;
-  if (++count < 20) return; /* 20 × 500ms = 10s */
+  if (++count < 20)
+    return; /* 20 × 500ms = 10s */
   count = 0;
 
-  static const uint8_t msg[] = "ALARM";
-  cc1101_tx_packet(msg, 5);
-  uartsw_puts("TX\r\n");
+  uint8_t pkt[PKT_LEN];
+  build_packet(pkt);
+  cc1101_tx_packet(pkt, PKT_LEN);
+
+  uartsw_puts("TX T:");
+  uartsw_puthex(pkt[4]);
+  uartsw_puts(" R:");
+  uartsw_puthex(pkt[5]);
+  uartsw_puts("\r\n");
 }
 
 /* Start user code for adding. Do not edit comment generated here */
