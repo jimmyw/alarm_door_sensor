@@ -190,20 +190,44 @@ static void send_status(const char *reason) {
   // uartsw_puts("\r\n");
 }
 
-/* IT interrupt handler — heartbeat every 5 min (600 × 500ms) */
-void INT_IT(void) {
-  static uint16_t count = 0;
-  if (++count < 600)
-    return;
-  count = 0;
-  send_status("HB");
-}
+/* Reed switch changed (P13.7) — debounce via IT counter */
+static volatile uint8_t reed_pending = 0;
+static volatile uint8_t tamp_pending = 0;
 
-/* Reed switch changed (P13.7) */
-void INT_P0(void) { send_status("REED"); }
+void INT_P0(void) { reed_pending = 1; }
 
 /* Tamper switch changed (P4.1) */
-void INT_P1(void) { send_status("TAMP"); }
+void INT_P1(void) { tamp_pending = 1; }
+
+/* IT interrupt handler — 500ms tick */
+void INT_IT(void) {
+  static uint16_t hb_count = 0;
+  static uint8_t debounce = 0;
+
+  /* Debounce: wait 1 tick (500ms) after pin change before sending */
+  if (reed_pending || tamp_pending) {
+    if (++debounce >= 1) {
+      if (reed_pending) {
+        reed_pending = 0;
+        send_status("REED");
+      }
+      if (tamp_pending) {
+        tamp_pending = 0;
+        send_status("TAMP");
+      }
+      debounce = 0;
+      hb_count = 0; /* reset heartbeat after event */
+    }
+    return;
+  }
+  debounce = 0;
+
+  /* Heartbeat every 5 min (600 × 500ms) */
+  if (++hb_count >= 600) {
+    hb_count = 0;
+    send_status("HB");
+  }
+}
 
 /* Start user code for adding. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
