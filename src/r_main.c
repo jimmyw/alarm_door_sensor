@@ -53,6 +53,9 @@ Global variables and functions
 
 /* Unique device serial number — change per device */
 static const uint8_t DEVICE_ID[4] = {0xDE, 0xAD, 0x00, 0x01};
+/* Previous pin states for change detection */
+static uint8_t prev_reed = 0;
+static uint8_t prev_tamp = 0;
 
 /*
  * Packet format (7 bytes):
@@ -151,26 +154,22 @@ void R_MAIN_UserInit(void) {
 
   PM4_bit.no1 = 1; /* P4.1 input — tamper switch */
 
-  /* INTP0 (P13.7 reed switch) — both edges */
-  EGP0_bit.no0 = 1; /* rising edge */
-  EGN0_bit.no0 = 1; /* falling edge */
-  PIF0 = 0U;        /* clear pending flag */
-  PMK0 = 0U;        /* unmask — enable INTP0 */
-
-  /* INTP1 (P4.1 tamper switch) — both edges */
-  EGP0_bit.no1 = 1; /* rising edge */
-  EGN0_bit.no1 = 1; /* falling edge */
-  PIF1 = 0U;        /* clear pending flag */
-  PMK1 = 0U;        /* unmask — enable INTP1 */
-
   R_CSI00_Start();
   cc1101_init();
   cc1101_powerdown();
   R_CSI00_Stop();
   uartsw_puts("CC1101 init OK\r\n");
 
-  // Pull up for switches
-  P2_bit.no0 = 1; // Pullup needs to be high to read switch state
+  /* Take initial pin snapshot with pull-up enabled */
+  P2_bit.no0 = 1;
+  {
+    volatile uint8_t d;
+    for (d = 0; d < 100; d++)
+      NOP();
+  }
+  prev_reed = P13_bit.no7;
+  prev_tamp = P4_bit.no1;
+  P2_bit.no0 = 0;
 }
 
 static void send_status(const char *reason) {
@@ -190,43 +189,41 @@ static void send_status(const char *reason) {
   // uartsw_puts("\r\n");
 }
 
-/* Reed switch changed (P13.7) — debounce via IT counter */
-static volatile uint8_t reed_pending = 0;
-static volatile uint8_t tamp_pending = 0;
-
-void INT_P0(void) { reed_pending = 1; }
-
-/* Tamper switch changed (P4.1) */
-void INT_P1(void) { tamp_pending = 1; }
-
-/* IT interrupt handler — 500ms tick */
+/* IT interrupt handler — 500ms tick, polls switch pins */
 void INT_IT(void) {
   static uint16_t hb_count = 0;
-  static uint8_t debounce = 0;
 
-  /* Debounce: wait 1 tick (500ms) after pin change before sending */
-  if (reed_pending || tamp_pending) {
-    if (++debounce >= 1) {
-      if (reed_pending) {
-        reed_pending = 0;
-        send_status("REED");
-      }
-      if (tamp_pending) {
-        tamp_pending = 0;
-        send_status("TAMP");
-      }
-      debounce = 0;
-      hb_count = 0; /* reset heartbeat after event */
-    }
-    return;
+  /* Enable pull-up and let it settle (~50µs) */
+  P2_bit.no0 = 1;
+  {
+    volatile uint8_t d;
+    for (d = 0; d < 100; d++)
+      NOP();
   }
-  debounce = 0;
+
+  uint8_t reed = P13_bit.no7;
+  uint8_t tamp = P4_bit.no1;
+
+  /* Send on change (pull-up stays on so build_packet reads correct values) */
+  if (reed != prev_reed) {
+    prev_reed = reed;
+    send_status("REED");
+    hb_count = 0;
+  }
+  if (tamp != prev_tamp) {
+    prev_tamp = tamp;
+    send_status("TAMP");
+    hb_count = 0;
+  }
 
   /* Heartbeat every 5 min (600 × 500ms) */
   if (++hb_count >= 600) {
     hb_count = 0;
     send_status("HB");
   }
+
+  /* Disable pull-up after all reads/sends are done */
+  P2_bit.no0 = 0;
 }
 
 /* Start user code for adding. Do not edit comment generated here */
