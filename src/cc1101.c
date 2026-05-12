@@ -128,6 +128,18 @@ void cc1101_idle(void) {
     ;
 }
 
+void cc1101_wakeup(void) {
+  CS_LOW();
+  /* CC1101 crystal startup from SLEEP takes up to 750µs.
+     At 20 MHz fIH, ~5000 loop iterations ≈ 1 ms — safe margin. */
+  {
+    volatile uint16_t d;
+    for (d = 0; d < 5000; d++)
+      NOP();
+  }
+  CS_HIGH();
+}
+
 void cc1101_powerdown(void) {
   cc1101_idle();
   cc1101_strobe(CC1101_SPWD);

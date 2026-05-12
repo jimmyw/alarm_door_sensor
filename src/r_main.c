@@ -190,6 +190,7 @@ static void send_status(const char *reason, uint8_t reed, uint8_t tamp) {
   build_packet(pkt, reed, tamp);
 
   R_CSI00_Start(); /* wake SPI */
+  cc1101_wakeup(); /* wake CC1101 from sleep */
   cc1101_tx_packet(pkt, PKT_LEN);
   cc1101_powerdown(); /* CC1101 sleep (~0.2µA) */
   R_CSI00_Stop();     /* stop SPI clock */
