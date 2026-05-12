@@ -57,6 +57,9 @@ static const uint8_t DEVICE_ID[4] = {0xDE, 0xAD, 0x00, 0x01};
 static uint8_t prev_reed = 0;
 static uint8_t prev_tamp = 0;
 
+// With debug on, we use the led as uart.
+#define DEBUG
+
 /*
  * Packet format (7 bytes):
  *   [0..3] Device ID  (4 bytes)
@@ -137,9 +140,18 @@ MD_STATUS R_CSI00_Send_Receive_Sync(uint8_t *const tx_buf, uint16_t tx_num,
 void R_MAIN_UserInit(void) {
   EI();
 
+#ifdef DEBUG
   uartsw_init();
   uartsw_puts("Hello, world!\r\n");
-
+  uartsw_puts("Device ID: ");
+  uartsw_puthex(DEVICE_ID[0]);
+  uartsw_puthex(DEVICE_ID[1]);
+  uartsw_puthex(DEVICE_ID[2]);
+  uartsw_puthex(DEVICE_ID[3]);
+  uartsw_puts("\r\n");
+#else
+  LED_OFF();
+#endif
   ///* Allow LOCO (low-speed oscillator) to keep running in STOP mode */
   OSMC = _10_CGC_IT_CLK_FIL; // WUTMMCK0=1: IT runs on LOCO during STOP
   //
@@ -158,8 +170,9 @@ void R_MAIN_UserInit(void) {
   cc1101_init();
   cc1101_powerdown();
   R_CSI00_Stop();
+#ifdef DEBUG
   uartsw_puts("CC1101 init OK\r\n");
-
+#endif
   /* Take initial pin snapshot with pull-up enabled */
   P2_bit.no0 = 1;
   {
@@ -181,12 +194,14 @@ static void send_status(const char *reason, uint8_t reed, uint8_t tamp) {
   cc1101_powerdown(); /* CC1101 sleep (~0.2µA) */
   R_CSI00_Stop();     /* stop SPI clock */
 
-  // uartsw_puts(reason);
-  // uartsw_puts(" T:");
-  // uartsw_puthex(pkt[4]);
-  // uartsw_puts(" R:");
-  // uartsw_puthex(pkt[5]);
-  // uartsw_puts("\r\n");
+#ifdef DEBUG
+  uartsw_puts(reason);
+  uartsw_puts(" T:");
+  uartsw_puthex(pkt[4]);
+  uartsw_puts(" R:");
+  uartsw_puthex(pkt[5]);
+  uartsw_puts("\r\n");
+#endif
 }
 
 /* IT interrupt handler — 500ms tick, polls switch pins */
