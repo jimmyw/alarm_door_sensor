@@ -66,14 +66,14 @@ static uint8_t prev_tamp = 0;
  */
 #define PKT_LEN 7
 
-static uint8_t build_packet(uint8_t *pkt) {
+static uint8_t build_packet(uint8_t *pkt, uint8_t reed, uint8_t tamp) {
 
   pkt[0] = DEVICE_ID[0];
   pkt[1] = DEVICE_ID[1];
   pkt[2] = DEVICE_ID[2];
   pkt[3] = DEVICE_ID[3];
-  pkt[4] = P4_bit.no1;  /* tamper switch */
-  pkt[5] = P13_bit.no7; /* reed switch */
+  pkt[4] = tamp; /* tamper switch */
+  pkt[5] = reed; /* reed switch */
   uint8_t chk = 0;
   for (uint8_t i = 0; i < 6; i++)
     chk ^= pkt[i];
@@ -172,9 +172,9 @@ void R_MAIN_UserInit(void) {
   P2_bit.no0 = 0;
 }
 
-static void send_status(const char *reason) {
+static void send_status(const char *reason, uint8_t reed, uint8_t tamp) {
   uint8_t pkt[PKT_LEN];
-  build_packet(pkt);
+  build_packet(pkt, reed, tamp);
 
   R_CSI00_Start(); /* wake SPI */
   cc1101_tx_packet(pkt, PKT_LEN);
@@ -197,33 +197,32 @@ void INT_IT(void) {
   P2_bit.no0 = 1;
   {
     volatile uint8_t d;
-    for (d = 0; d < 100; d++)
+    for (d = 0; d < 10; d++)
       NOP();
   }
 
   uint8_t reed = P13_bit.no7;
   uint8_t tamp = P4_bit.no1;
+  /* Disable pull-up after all reads/sends are done */
+  P2_bit.no0 = 0;
 
   /* Send on change (pull-up stays on so build_packet reads correct values) */
   if (reed != prev_reed) {
     prev_reed = reed;
-    send_status("REED");
+    send_status("REED", reed, tamp);
     hb_count = 0;
   }
   if (tamp != prev_tamp) {
     prev_tamp = tamp;
-    send_status("TAMP");
+    send_status("TAMP", reed, tamp);
     hb_count = 0;
   }
 
   /* Heartbeat every 5 min (600 × 500ms) */
   if (++hb_count >= 600) {
     hb_count = 0;
-    send_status("HB");
+    send_status("HB", prev_reed, prev_tamp);
   }
-
-  /* Disable pull-up after all reads/sends are done */
-  P2_bit.no0 = 0;
 }
 
 /* Start user code for adding. Do not edit comment generated here */
