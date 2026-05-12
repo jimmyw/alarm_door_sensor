@@ -166,6 +166,7 @@ void R_MAIN_UserInit(void) {
   TMKAMK = 0U;            // unmask — ready to fire
 
   PM4_bit.no1 = 1; /* P4.1 input — tamper switch */
+  PU1_bit.no1 = 1; /* pull-up on MISO (P1.1) — needed for CC1101 sleep wakeup */
 
   R_CSI00_Start();
   cc1101_init();
