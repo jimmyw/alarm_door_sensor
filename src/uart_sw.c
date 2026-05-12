@@ -39,6 +39,13 @@ int uartsw_putchar(int c) {
   return (unsigned char)c;
 }
 
+int uartsw_puthex(unsigned char c) {
+  const char hex[] = "0123456789ABCDEF";
+  uartsw_putchar(hex[c >> 4]);
+  uartsw_putchar(hex[c & 0x0F]);
+  return 2;
+}
+
 int uartsw_puts(const char *s) {
   while ('\0' != *s) {
     (void)uartsw_putchar(*s++);
