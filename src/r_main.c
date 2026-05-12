@@ -177,10 +177,10 @@ static void send_status(const char *reason) {
   uint8_t pkt[PKT_LEN];
   build_packet(pkt);
 
-  R_CSI00_Start();              /* wake SPI */
+  R_CSI00_Start(); /* wake SPI */
   cc1101_tx_packet(pkt, PKT_LEN);
-  cc1101_powerdown();           /* CC1101 sleep (~0.2µA) */
-  R_CSI00_Stop();               /* stop SPI clock */
+  cc1101_powerdown(); /* CC1101 sleep (~0.2µA) */
+  R_CSI00_Stop();     /* stop SPI clock */
 
   // uartsw_puts(reason);
   // uartsw_puts(" T:");

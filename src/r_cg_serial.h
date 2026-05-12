@@ -110,10 +110,11 @@ Macro definitions (Register bit)
     Serial Communication Operation Setting Register mn (SCRmn)
 */
 /* Setting of operation mode of channel n (TXEmn, RXEmn) */
-#define _0000_SAU_NOT_COMMUNICATION (0x0000U) /* does not start communication  \
-                                               */
-#define _4000_SAU_RECEPTION (0x4000U)         /* reception only */
-#define _8000_SAU_TRANSMISSION (0x8000U)      /* transmission only */
+#define _0000_SAU_NOT_COMMUNICATION                                            \
+  (0x0000U)                              /* does not start communication       \
+                                          */
+#define _4000_SAU_RECEPTION (0x4000U)    /* reception only */
+#define _8000_SAU_TRANSMISSION (0x8000U) /* transmission only */
 #define _C000_SAU_RECEPTION_TRANSMISSION                                       \
   (0xC000U) /* reception and transmission */
 /* Selection of data and clock phase in CSI mode (DAPmn, CKPmn) */
@@ -173,8 +174,9 @@ Macro definitions (Register bit)
     Format of Serial Status Register mn (SSRmn)
 */
 /* Communication status indication flag of channel n (TSFmn) */
-#define _0040_SAU_UNDER_EXECUTE (0x0040U) /* communication is under execution  \
-                                           */
+#define _0040_SAU_UNDER_EXECUTE                                                \
+  (0x0040U) /* communication is under execution                                \
+             */
 /* Buffer register status indication flag of channel n (BFFmn) */
 #define _0020_SAU_VALID_STORED                                                 \
   (0x0020U) /* valid data is stored in the SDRmn register */
@@ -352,9 +354,10 @@ Macro definitions (Register bit)
 #define _00_IICA_ACK_DISABLE (0x00U) /* disable acknowledgement */
 #define _04_IICA_ACK_ENABLE (0x04U)  /* enable acknowledgement */
 /* Start condition trigger (STTn) */
-#define _00_IICA_START_NOTGENERATE (0x00U) /* do not generate start condition  \
-                                            */
-#define _02_IICA_START_GENERATE (0x02U)    /* generate start condition */
+#define _00_IICA_START_NOTGENERATE                                             \
+  (0x00U)                               /* do not generate start condition     \
+                                         */
+#define _02_IICA_START_GENERATE (0x02U) /* generate start condition */
 /* Stop condition trigger (SPTn) */
 #define _00_IICA_STOP_NOTGENERATE (0x00U) /* do not generate stop condition */
 #define _01_IICA_STOP_GENERATE (0x01U)    /* generate stop condition */
@@ -365,10 +368,12 @@ Macro definitions (Register bit)
 /* Master device status (MSTSn) */
 #define _00_IICA_STATUS_NOTMASTER                                              \
   (0x00U) /* slave device status or communication standby status */
-#define _80_IICA_STATUS_MASTER (0x80U) /* master device communication status   \
-                                        */
+#define _80_IICA_STATUS_MASTER                                                 \
+  (0x80U) /* master device communication status                                \
+           */
 /* Detection of arbitration loss (ALDn) */
-#define _00_IICA_ARBITRATION_NO (0x00U)   /* arbitration win or no arbitration \
+#define _00_IICA_ARBITRATION_NO                                                \
+  (0x00U)                                 /* arbitration win or no arbitration \
                                            */
 #define _40_IICA_ARBITRATION_LOSS (0x40U) /* arbitration loss */
 /* Detection of extension code reception (EXCn) */
@@ -432,8 +437,9 @@ Macro definitions (Register bit)
 #define _00_IICA_FILTER_OFF (0x00U) /* digital filter off */
 #define _04_IICA_FILTER_ON (0x04U)  /* digital filter on */
 /* Operation of clock dividing frequency permission (PRSn) */
-#define _00_IICA_fCLK (0x00U) /* clock of dividing frequency operation (fCLK)  \
-                               */
+#define _00_IICA_fCLK                                                          \
+  (0x00U) /* clock of dividing frequency operation (fCLK)                      \
+           */
 #define _01_IICA_fCLK_HALF                                                     \
   (0x01U) /* 2 clock of dividing frequency operation (fCLK/2) */
 /* IICA used flag */

@@ -4,9 +4,9 @@
 #include <stddef.h>
 
 /* CS pin: P2.3 */
-#define CS_LOW()  (P2_bit.no3 = 0)
+#define CS_LOW() (P2_bit.no3 = 0)
 #define CS_HIGH() (P2_bit.no3 = 1)
-#define MISO_PIN  (P1_bit.no1)
+#define MISO_PIN (P1_bit.no1)
 
 extern MD_STATUS R_CSI00_Send_Receive_Sync(uint8_t *const tx_buf,
                                            uint16_t tx_num,
@@ -54,105 +54,105 @@ static const uint8_t cc1101_config[][2] = {
 
 /* PA table: +10 dBm for 868 MHz */
 static const uint8_t pa_table[8] = {0xC0, 0x00, 0x00, 0x00,
-                                     0x00, 0x00, 0x00, 0x00};
+                                    0x00, 0x00, 0x00, 0x00};
 
 void cc1101_reset(void) {
-    CS_HIGH();
-    NOP();
-    CS_LOW();
-    while (MISO_PIN)
-        ;
-    uint8_t sres = CC1101_SRES;
-    R_CSI00_Send_Receive_Sync(&sres, 1, NULL);
-    while (MISO_PIN)
-        ;
-    CS_HIGH();
+  CS_HIGH();
+  NOP();
+  CS_LOW();
+  while (MISO_PIN)
+    ;
+  uint8_t sres = CC1101_SRES;
+  R_CSI00_Send_Receive_Sync(&sres, 1, NULL);
+  while (MISO_PIN)
+    ;
+  CS_HIGH();
 }
 
 uint8_t cc1101_strobe(uint8_t strobe) {
-    uint8_t status;
-    CS_LOW();
-    R_CSI00_Send_Receive_Sync(&strobe, 1, &status);
-    CS_HIGH();
-    return status;
+  uint8_t status;
+  CS_LOW();
+  R_CSI00_Send_Receive_Sync(&strobe, 1, &status);
+  CS_HIGH();
+  return status;
 }
 
 void cc1101_write_reg(uint8_t addr, uint8_t value) {
-    uint8_t tx[2];
-    tx[0] = addr & 0x3F; /* write, single */
-    tx[1] = value;
-    CS_LOW();
-    R_CSI00_Send_Receive_Sync(tx, 2, NULL);
-    CS_HIGH();
+  uint8_t tx[2];
+  tx[0] = addr & 0x3F; /* write, single */
+  tx[1] = value;
+  CS_LOW();
+  R_CSI00_Send_Receive_Sync(tx, 2, NULL);
+  CS_HIGH();
 }
 
 uint8_t cc1101_read_reg(uint8_t addr) {
-    uint8_t tx[2], rx[2];
-    tx[0] = (addr & 0x3F) | 0x80; /* read, single */
-    tx[1] = 0x00;
-    CS_LOW();
-    R_CSI00_Send_Receive_Sync(tx, 2, rx);
-    CS_HIGH();
-    return rx[1];
+  uint8_t tx[2], rx[2];
+  tx[0] = (addr & 0x3F) | 0x80; /* read, single */
+  tx[1] = 0x00;
+  CS_LOW();
+  R_CSI00_Send_Receive_Sync(tx, 2, rx);
+  CS_HIGH();
+  return rx[1];
 }
 
 uint8_t cc1101_read_status(uint8_t addr) {
-    uint8_t tx[2], rx[2];
-    tx[0] = (addr & 0x3F) | 0xC0; /* read, burst (status register) */
-    tx[1] = 0x00;
-    CS_LOW();
-    R_CSI00_Send_Receive_Sync(tx, 2, rx);
-    CS_HIGH();
-    return rx[1];
+  uint8_t tx[2], rx[2];
+  tx[0] = (addr & 0x3F) | 0xC0; /* read, burst (status register) */
+  tx[1] = 0x00;
+  CS_LOW();
+  R_CSI00_Send_Receive_Sync(tx, 2, rx);
+  CS_HIGH();
+  return rx[1];
 }
 
 void cc1101_write_burst(uint8_t addr, const uint8_t *data, uint8_t len) {
-    uint8_t hdr = (addr & 0x3F) | 0x40; /* write, burst */
-    CS_LOW();
-    R_CSI00_Send_Receive_Sync(&hdr, 1, NULL);
-    R_CSI00_Send_Receive_Sync((uint8_t *)data, len, NULL);
-    CS_HIGH();
+  uint8_t hdr = (addr & 0x3F) | 0x40; /* write, burst */
+  CS_LOW();
+  R_CSI00_Send_Receive_Sync(&hdr, 1, NULL);
+  R_CSI00_Send_Receive_Sync((uint8_t *)data, len, NULL);
+  CS_HIGH();
 }
 
 void cc1101_read_burst(uint8_t addr, uint8_t *data, uint8_t len) {
-    uint8_t hdr = (addr & 0x3F) | 0xC0; /* read, burst */
-    CS_LOW();
-    R_CSI00_Send_Receive_Sync(&hdr, 1, NULL);
-    R_CSI00_Send_Receive_Sync(NULL, len, data);
-    CS_HIGH();
+  uint8_t hdr = (addr & 0x3F) | 0xC0; /* read, burst */
+  CS_LOW();
+  R_CSI00_Send_Receive_Sync(&hdr, 1, NULL);
+  R_CSI00_Send_Receive_Sync(NULL, len, data);
+  CS_HIGH();
 }
 
 void cc1101_idle(void) {
-    cc1101_strobe(CC1101_SIDLE);
-    while ((cc1101_read_status(CC1101_MARCSTATE) & 0x1F) != MARCSTATE_IDLE)
-        ;
+  cc1101_strobe(CC1101_SIDLE);
+  while ((cc1101_read_status(CC1101_MARCSTATE) & 0x1F) != MARCSTATE_IDLE)
+    ;
 }
 
 void cc1101_powerdown(void) {
-    cc1101_idle();
-    cc1101_strobe(CC1101_SPWD);
+  cc1101_idle();
+  cc1101_strobe(CC1101_SPWD);
 }
 
 void cc1101_init(void) {
-    cc1101_reset();
+  cc1101_reset();
 
-    /* Write configuration registers */
-    for (uint8_t i = 0; i < CC1101_CONFIG_COUNT; i++) {
-        cc1101_write_reg(cc1101_config[i][0], cc1101_config[i][1]);
-    }
+  /* Write configuration registers */
+  for (uint8_t i = 0; i < CC1101_CONFIG_COUNT; i++) {
+    cc1101_write_reg(cc1101_config[i][0], cc1101_config[i][1]);
+  }
 
-    /* Write PA table */
-    cc1101_write_burst(0x3E, pa_table, 8);
+  /* Write PA table */
+  cc1101_write_burst(0x3E, pa_table, 8);
 }
 
 void cc1101_tx_packet(const uint8_t *data, uint8_t len) {
-    cc1101_idle();
-    cc1101_strobe(CC1101_SFTX);                  /* flush TX FIFO */
-    cc1101_write_reg(CC1101_TXFIFO, len);         /* length byte */
-    cc1101_write_burst(CC1101_TXFIFO, data, len); /* payload */
-    cc1101_strobe(CC1101_STX);                    /* start TX */
+  cc1101_idle();
+  cc1101_strobe(CC1101_SFTX);                   /* flush TX FIFO */
+  cc1101_write_reg(CC1101_TXFIFO, len);         /* length byte */
+  cc1101_write_burst(CC1101_TXFIFO, data, len); /* payload */
+  cc1101_strobe(CC1101_STX);                    /* start TX */
 
-    /* Wait for TX to finish (GDO0 goes high then low, or poll MARCSTATE) */
-    while ((cc1101_read_status(CC1101_MARCSTATE) & 0x1F) == MARCSTATE_TX)
-        ;
+  /* Wait for TX to finish (GDO0 goes high then low, or poll MARCSTATE) */
+  while ((cc1101_read_status(CC1101_MARCSTATE) & 0x1F) == MARCSTATE_TX)
+    ;
 }
