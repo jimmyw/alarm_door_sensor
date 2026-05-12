@@ -59,6 +59,7 @@ static uint8_t prev_tamp = 0;
 
 // With debug on, we use the led as uart.
 #define DEBUG
+#define STATUS_INTERVAL_MS 600000
 
 /*
  * Packet format (7 bytes):
@@ -235,7 +236,7 @@ void INT_IT(void) {
   }
 
   /* Heartbeat every 5 min (600 × 500ms) */
-  if (++hb_count >= 600) {
+  if (++hb_count >= (STATUS_INTERVAL_MS / 500)) {
     hb_count = 0;
     send_status("HB", prev_reed, prev_tamp);
   }
