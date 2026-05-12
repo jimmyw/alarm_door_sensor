@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
+
+# Set toolchain before project() call
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/rl78-toolchain.cmake" CACHE FILEPATH "")
+
 project(Blink C ASM)
 
 # ---------- Sources ----------
@@ -9,6 +13,7 @@ set(C_SOURCES
     src/r_cg_vector_table.c
     src/r_hardware_setup.c
     src/r_main.c
+    src/uart_sw.c
 )
 
 set(ASM_SOURCES

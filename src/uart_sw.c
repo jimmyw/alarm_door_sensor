@@ -2,13 +2,16 @@
 #include <iodefine.h>
 #include <iodefine_ext.h>
 
-/* Software UART TX on P60 (physical pin 11), open-drain with external pull-up. */
+/* Software UART TX on P60 (physical pin 11), open-drain with external pull-up.
+ */
 
-static volatile unsigned short g_uart_sw_bit_delay_ticks = 128U;
+#define NOP_COUNT 162U
+#define PORT P2_bit.no2
+#define PORTM PM2_bit.no2
 
 static void tx_delay(void) {
   volatile unsigned short i;
-  for (i = 0U; i < g_uart_sw_bit_delay_ticks; i++) {
+  for (i = 0U; i < NOP_COUNT; i++) {
     NOP();
   }
 }
@@ -19,16 +22,16 @@ int uartsw_putchar(int c) {
 
   DI();
 
-  P6_bit.no0 = 0U; /* Start bit */
+  PORT = 0U; /* Start bit */
   tx_delay();
 
   for (i = 0U; i < 8U; i++) {
-    P6_bit.no0 = (unsigned char)(data & 0x01U);
+    PORT = (unsigned char)(data & 0x01U);
     tx_delay();
     data >>= 1;
   }
 
-  P6_bit.no0 = 1U; /* Stop bit */
+  PORT = 1U; /* Stop bit */
   tx_delay();
   tx_delay();
 
@@ -44,6 +47,6 @@ int uartsw_puts(const char *s) {
 }
 
 void uartsw_init(void) {
-  P6_bit.no0 = 1U;
-  PM6_bit.no0 = 0U;
+  PORT = 1U;
+  PORTM = 0U;
 }

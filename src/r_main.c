@@ -36,6 +36,7 @@ Includes
 #include "interrupt_handlers.h"
 #include "r_cg_cgc.h"
 #include "r_cg_macrodriver.h"
+#include "uart_sw.h"
 /* Start user code for include. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
 #include "r_cg_userdefine.h"
@@ -61,6 +62,14 @@ int main(void) {
   return 0;
 }
 
+void LED_INIT() {
+  P2_bit.no2 = 1;  // LED off
+  PM2_bit.no2 = 0; // output
+}
+void LED_ON() { P2_bit.no2 = 0; }
+
+void LED_OFF() { P2_bit.no2 = 1; }
+
 /***********************************************************************************************************************
  * Function Name: R_MAIN_UserInit
  * Description  : This function adds user code before implementing main
@@ -70,9 +79,6 @@ void R_MAIN_UserInit(void) {
   EI();
 
   ADPC = 0x01U; // Turn all outputs into Digital
-
-  P2_bit.no2 = 1;
-  PM2 = 0x00; // all output
 
   ///* Allow LOCO (low-speed oscillator) to keep running in STOP mode */
   OSMC = _10_CGC_IT_CLK_FIL; // WUTMMCK0=1: IT runs on LOCO during STOP
@@ -85,13 +91,13 @@ void R_MAIN_UserInit(void) {
   TMKAIF = 0U;            // clear any pending flag
   ITMC = 0x8000U | 7499U; // bit15=enable, lower 15 bits = compare value
   TMKAMK = 0U;            // unmask — ready to fire
-  P2_bit.no2 = 0;         // turn on LED on P2.2
+
+  uartsw_init();
+  uartsw_puts("Hello, world!\r\n");
 }
 
 /* IT interrupt handler — fires every 500ms */
-void INT_IT(void) {
-  P2_bit.no2 = ~P2_bit.no2; // toggle LED on P2.2
-}
+void INT_IT(void) { uartsw_puts("U"); }
 
 /* Start user code for adding. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
