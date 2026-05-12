@@ -130,13 +130,8 @@ void cc1101_idle(void) {
 
 void cc1101_wakeup(void) {
   CS_LOW();
-  /* CC1101 crystal startup from SLEEP takes up to 750µs.
-     At 20 MHz fIH, ~5000 loop iterations ≈ 1 ms — safe margin. */
-  {
-    volatile uint16_t d;
-    for (d = 0; d < 5000; d++)
-      NOP();
-  }
+  while (MISO_PIN)
+    ; /* MISO pulled high by RL78 pull-up; CC1101 drives low when ready */
   CS_HIGH();
 }
 
@@ -164,7 +159,10 @@ void cc1101_tx_packet(const uint8_t *data, uint8_t len) {
   cc1101_write_burst(CC1101_TXFIFO, data, len); /* payload */
   cc1101_strobe(CC1101_STX);                    /* start TX */
 
-  /* Wait for TX to finish (GDO0 goes high then low, or poll MARCSTATE) */
-  while ((cc1101_read_status(CC1101_MARCSTATE) & 0x1F) == MARCSTATE_TX)
+  /* Wait for chip to leave IDLE (enters calibration/TX) */
+  while ((cc1101_read_status(CC1101_MARCSTATE) & 0x1F) == MARCSTATE_IDLE)
+    ;
+  /* Wait for chip to return to IDLE (TX complete) */
+  while ((cc1101_read_status(CC1101_MARCSTATE) & 0x1F) != MARCSTATE_IDLE)
     ;
 }
