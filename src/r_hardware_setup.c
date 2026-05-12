@@ -27,7 +27,7 @@
  * Device(s)    : R5F1026A
  * Tool-Chain   : LLVMRL78
  * Description  : This file implements system initializing function.
- * Creation Date: 2026/05/10
+ * Creation Date: 2026/05/12
  ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -35,6 +35,8 @@ Includes
 ***********************************************************************************************************************/
 #include "r_cg_cgc.h"
 #include "r_cg_macrodriver.h"
+#include "r_cg_port.h"
+#include "r_cg_serial.h"
 /* Start user code for include. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
 #include "r_cg_userdefine.h"
@@ -57,6 +59,8 @@ void R_Systeminit(void) {
   PIOR = 0x00U;
   R_CGC_Get_ResetSource();
   R_CGC_Create();
+  R_PORT_Create();
+  R_SAU0_Create();
   IAWCTL = 0x00U;
 }
 

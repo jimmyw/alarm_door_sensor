@@ -27,7 +27,7 @@
  * Device(s)    : R5F1026A
  * Tool-Chain   : LLVMRL78
  * Description  : This file declares interrupt service routine.
- * Creation Date: 2026/05/10
+ * Creation Date: 2026/05/12
  ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -142,7 +142,7 @@ void INT_AD(void) {}
 /*
  * INT_IT (0x2A)
  */
-// void INT_IT (void) { }
+// void INT_IT(void) {}
 
 /*
  * INT_KR (0x2C)

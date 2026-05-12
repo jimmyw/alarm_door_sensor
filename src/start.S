@@ -24,7 +24,7 @@
 ;;* Device(s)    : R5F1026A
 ;;* Tool-Chain   : llvmrl78
 ;;* Description  : This is start up file for RL78.
-;;* Creation Date: 2026/05/10
+;;* Creation Date: 2026/05/12
 ;;*********************************************************************************************************************/
 
     /*reset_program.asm*/

@@ -22,23 +22,19 @@
  ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
- * File Name    : r_main.c
+ * File Name    : r_cg_port.c
  * Version      : Code Generator for RL78/G12 V1.0.0 [01 Jul 2024]
  * Device(s)    : R5F1026A
  * Tool-Chain   : LLVMRL78
- * Description  : This file implements main function.
+ * Description  : This file implements device driver for PORT module.
  * Creation Date: 2026/05/12
  ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
 Includes
 ***********************************************************************************************************************/
-#include "interrupt_handlers.h"
-#include "r_cg_cgc.h"
-#include "r_cg_macrodriver.h"
-#include "uart_sw.h"
 #include "r_cg_port.h"
-#include "r_cg_serial.h"
+#include "r_cg_macrodriver.h"
 /* Start user code for include. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
 #include "r_cg_userdefine.h"
@@ -48,58 +44,21 @@ Global variables and functions
 ***********************************************************************************************************************/
 /* Start user code for global. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
-void R_MAIN_UserInit(void);
 
 /***********************************************************************************************************************
- * Function Name: main
- * Description  : This function implements main function.
+ * Function Name: R_PORT_Create
+ * Description  : This function initializes the Port I/O.
  * Arguments    : None
  * Return Value : None
  ***********************************************************************************************************************/
-int main(void) {
-  R_MAIN_UserInit();
-  while (1) {
-    STOP(); // deep sleep, wakes on IT interrupt
-  }
-  return 0;
+void R_PORT_Create(void) {
+  P2 = _00_Pn2_OUTPUT_0;
+  ADPC = _03_ADPC_DI_ON;
+  PM2 = _01_PMn0_NOT_USE | _02_PMn1_NOT_USE | _00_PMn2_MODE_OUTPUT |
+        _08_PMn3_NOT_USE | _F0_PM2_DEFAULT;
+
+  R_PORT_Create_UserInit();
 }
-
-void LED_INIT() {
-  P2_bit.no2 = 1;  // LED off
-  PM2_bit.no2 = 0; // output
-}
-void LED_ON() { P2_bit.no2 = 0; }
-
-void LED_OFF() { P2_bit.no2 = 1; }
-
-/***********************************************************************************************************************
- * Function Name: R_MAIN_UserInit
- * Description  : This function adds user code before implementing main
- * function. Arguments    : None Return Value : None
- ***********************************************************************************************************************/
-void R_MAIN_UserInit(void) {
-  EI();
-
-  ADPC = 0x01U; // Turn all outputs into Digital
-
-  ///* Allow LOCO (low-speed oscillator) to keep running in STOP mode */
-  OSMC = _10_CGC_IT_CLK_FIL; // WUTMMCK0=1: IT runs on LOCO during STOP
-  //
-  ///* Enable clock to interval timer */
-  TMKAEN = 1U; // PER0 bit5 — TAU-KA clock on
-  //
-  ///* Configure Interval Timer for 500ms using LOCO @ 15kHz */make -C
-  TMKAMK = 1U;            // mask IT interrupt while configuring
-  TMKAIF = 0U;            // clear any pending flag
-  ITMC = 0x8000U | 7499U; // bit15=enable, lower 15 bits = compare value
-  TMKAMK = 0U;            // unmask — ready to fire
-
-  uartsw_init();
-  uartsw_puts("Hello, world!\r\n");
-}
-
-/* IT interrupt handler — fires every 500ms */
-void INT_IT(void) { uartsw_puts("U"); }
 
 /* Start user code for adding. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */

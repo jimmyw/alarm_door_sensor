@@ -27,7 +27,7 @@
  * Device(s)    : R5F1026A
  * Tool-Chain   : LLVMRL78
  * Description  : This file implements interrupt vector.
- * Creation Date: 2026/05/10
+ * Creation Date: 2026/05/12
  ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -98,11 +98,9 @@ const void *Vectors[] VECT_SECT = {
     INT_DMA1,
 
     /*
-     * INT_ST0/INT_CSI00/INT_IIC00 (0x14)
+     * INT_CSI00 (0x14)
      */
-    INT_ST0,
-    // INT_CSI00,
-    // INT_IIC00,
+    r_csi00_interrupt,
 
     /*
      * INT_SR0/INT_CSI01/INT_IIC01 (0x16)

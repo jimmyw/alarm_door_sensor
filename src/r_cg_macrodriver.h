@@ -27,7 +27,7 @@
  * Device(s)    : R5F1026A
  * Tool-Chain   : LLVMRL78
  * Description  : This file implements general head file.
- * Creation Date: 2026/05/10
+ * Creation Date: 2026/05/12
  ***********************************************************************************************************************/
 
 #ifndef STATUS_H

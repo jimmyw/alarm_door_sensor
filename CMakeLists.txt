@@ -11,7 +11,11 @@ set(C_SOURCES
     src/r_cg_cgc_user.c
     src/r_cg_inthandler.c
     src/r_cg_vector_table.c
+    src/r_cg_port_user.c
     src/r_hardware_setup.c
+    src/r_cg_port.c
+    src/r_cg_serial.c
+    src/r_cg_serial_user.c
     src/r_main.c
     src/uart_sw.c
 )

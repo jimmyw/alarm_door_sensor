@@ -27,7 +27,7 @@
  * Device(s)    : R5F1026A
  * Tool-Chain   : LLVMRL78
  * Description  : This file declares interrupt handlers.
- * Creation Date: 2026/05/10
+ * Creation Date: 2026/05/12
  ***********************************************************************************************************************/
 
 #ifndef INTERRUPT_HANDLERS_H
@@ -90,11 +90,9 @@ void INT_DMA0(void) __attribute__((interrupt));
 void INT_DMA1(void) __attribute__((interrupt));
 
 /*
- * INT_ST0/INT_CSI00/INT_IIC00 (0x14)
+ * INT_CSI00 (0x14)
  */
-void INT_ST0(void) __attribute__((interrupt));
-// void INT_CSI00(void) __attribute__ ((interrupt));
-// void INT_IIC00(void) __attribute__ ((interrupt));
+void r_csi00_interrupt(void) __attribute__((interrupt));
 
 /*
  * INT_SR0/INT_CSI01/INT_IIC01 (0x16)
