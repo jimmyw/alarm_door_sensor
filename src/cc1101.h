@@ -44,5 +44,6 @@ void    cc1101_write_burst(uint8_t addr, const uint8_t *data, uint8_t len);
 void    cc1101_read_burst(uint8_t addr, uint8_t *data, uint8_t len);
 void    cc1101_tx_packet(const uint8_t *data, uint8_t len);
 void    cc1101_idle(void);
+void    cc1101_powerdown(void);
 
 #endif

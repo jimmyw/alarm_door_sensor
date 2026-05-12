@@ -128,6 +128,11 @@ void cc1101_idle(void) {
         ;
 }
 
+void cc1101_powerdown(void) {
+    cc1101_idle();
+    cc1101_strobe(CC1101_SPWD);
+}
+
 void cc1101_init(void) {
     cc1101_reset();
 

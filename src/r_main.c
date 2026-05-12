@@ -165,6 +165,8 @@ void R_MAIN_UserInit(void) {
 
   R_CSI00_Start();
   cc1101_init();
+  cc1101_powerdown();
+  R_CSI00_Stop();
   uartsw_puts("CC1101 init OK\r\n");
 
   // Pull up for switches
@@ -174,14 +176,18 @@ void R_MAIN_UserInit(void) {
 static void send_status(const char *reason) {
   uint8_t pkt[PKT_LEN];
   build_packet(pkt);
-  cc1101_tx_packet(pkt, PKT_LEN);
 
-  uartsw_puts(reason);
-  uartsw_puts(" T:");
-  uartsw_puthex(pkt[4]);
-  uartsw_puts(" R:");
-  uartsw_puthex(pkt[5]);
-  uartsw_puts("\r\n");
+  R_CSI00_Start();              /* wake SPI */
+  cc1101_tx_packet(pkt, PKT_LEN);
+  cc1101_powerdown();           /* CC1101 sleep (~0.2µA) */
+  R_CSI00_Stop();               /* stop SPI clock */
+
+  // uartsw_puts(reason);
+  // uartsw_puts(" T:");
+  // uartsw_puthex(pkt[4]);
+  // uartsw_puts(" R:");
+  // uartsw_puthex(pkt[5]);
+  // uartsw_puts("\r\n");
 }
 
 /* IT interrupt handler — heartbeat every 5 min (600 × 500ms) */
