@@ -36,9 +36,11 @@ Includes
 #include "interrupt_handlers.h"
 #include "r_cg_cgc.h"
 #include "r_cg_macrodriver.h"
-#include "uart_sw.h"
 #include "r_cg_port.h"
 #include "r_cg_serial.h"
+#include "uart_sw.h"
+#include "cc1101.h"
+#include <stddef.h>
 /* Start user code for include. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */
 #include "r_cg_userdefine.h"
@@ -72,6 +74,28 @@ void LED_ON() { P2_bit.no2 = 0; }
 
 void LED_OFF() { P2_bit.no2 = 1; }
 
+MD_STATUS R_CSI00_Send_Receive_Sync(uint8_t *const tx_buf, uint16_t tx_num,
+                                    uint8_t *const rx_buf) {
+  if (tx_num < 1U) {
+    return MD_ARGERROR;
+  }
+
+  CSIMK00 = 1U;                    // disable CSI00 interrupt — we poll instead
+  SMR00 &= ~_0001_SAU_BUFFER_EMPTY; // flag means "transfer complete", not "buffer empty"
+
+  for (uint16_t i = 0; i < tx_num; i++) {
+    CSIIF00 = 0U;                              // clear flag
+    SIO00 = (tx_buf != 0) ? tx_buf[i] : 0xFFU; // send byte
+    while (CSIIF00 == 0U)
+      ; // wait for transfer to finish
+    if (rx_buf != 0) {
+      rx_buf[i] = (uint8_t)SIO00; // read received byte
+    }
+  }
+
+  return MD_OK;
+}
+
 /***********************************************************************************************************************
  * Function Name: R_MAIN_UserInit
  * Description  : This function adds user code before implementing main
@@ -80,7 +104,8 @@ void LED_OFF() { P2_bit.no2 = 1; }
 void R_MAIN_UserInit(void) {
   EI();
 
-  ADPC = 0x01U; // Turn all outputs into Digital
+  uartsw_init();
+  uartsw_puts("Hello, world!\r\n");
 
   ///* Allow LOCO (low-speed oscillator) to keep running in STOP mode */
   OSMC = _10_CGC_IT_CLK_FIL; // WUTMMCK0=1: IT runs on LOCO during STOP
@@ -94,12 +119,21 @@ void R_MAIN_UserInit(void) {
   ITMC = 0x8000U | 7499U; // bit15=enable, lower 15 bits = compare value
   TMKAMK = 0U;            // unmask — ready to fire
 
-  uartsw_init();
-  uartsw_puts("Hello, world!\r\n");
+  R_CSI00_Start();
+  cc1101_init();
+  uartsw_puts("CC1101 init OK\r\n");
 }
 
 /* IT interrupt handler — fires every 500ms */
-void INT_IT(void) { uartsw_puts("U"); }
+void INT_IT(void) {
+  static uint8_t count = 0;
+  if (++count < 20) return; /* 20 × 500ms = 10s */
+  count = 0;
+
+  static const uint8_t msg[] = "ALARM";
+  cc1101_tx_packet(msg, 5);
+  uartsw_puts("TX\r\n");
+}
 
 /* Start user code for adding. Do not edit comment generated here */
 /* End user code. Do not edit comment generated here */

@@ -18,6 +18,7 @@ set(C_SOURCES
     src/r_cg_serial_user.c
     src/r_main.c
     src/uart_sw.c
+    src/cc1101.c
 )
 
 set(ASM_SOURCES
