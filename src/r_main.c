@@ -62,26 +62,75 @@ static uint8_t prev_tamp = 0;
 #define STATUS_INTERVAL_MS 600000
 
 /*
- * Packet format (7 bytes):
+ * Measure VDD using the internal reference voltage (~1.45V).
+ * Returns supply voltage in millivolts.
+ */
+static uint16_t read_vdd_mv(void) {
+  ADCEN = 1U; /* enable ADC peripheral clock */
+  ADMK = 1U;  /* mask ADC interrupt — we poll */
+
+  ADM0 = 0x38U; /* Normal 1 mode, fCLK/2 */
+  ADM1 = 0x20U; /* software trigger, one-shot */
+  ADM2 = 0x00U; /* VDD/VSS ref, 10-bit */
+  ADS = 0x81U;  /* internal reference voltage (1.45V) */
+  ADLL = 0x00U;
+  ADUL = 0xFFU;
+
+  ADCE = 1U;
+  {
+    volatile uint16_t d;
+    for (d = 0; d < 100; d++)
+      NOP(); /* 1µs stabilisation */
+  }
+
+  /* Dummy conversion (first after channel change is undefined) */
+  ADIF = 0U;
+  ADCS = 1U;
+  while (ADIF == 0U)
+    ;
+
+  /* Real conversion */
+  ADIF = 0U;
+  ADCS = 1U;
+  while (ADIF == 0U)
+    ;
+
+  uint16_t result = ADCR >> 6; /* right-justify 10-bit result */
+
+  /* Shut down */
+  ADCE = 0U;
+  ADCEN = 0U;
+
+  if (result == 0)
+    return 0xFFFF;
+  return (uint16_t)(((uint32_t)1024 * 1450) / result);
+}
+
+/*
+ * Packet format (9 bytes):
  *   [0..3] Device ID  (4 bytes)
  *   [4]    Tamper switch  (P4.1: 0=closed/OK, 1=open/tampered)
  *   [5]    Reed switch    (P13.7: 0=closed/window shut, 1=open/window open)
- *   [6]    Checksum       (XOR of bytes 0..5)
+ *   [6..7] Battery voltage in mV, big-endian
+ *   [8]    Checksum       (XOR of bytes 0..7)
  */
-#define PKT_LEN 7
+#define PKT_LEN 9
 
-static uint8_t build_packet(uint8_t *pkt, uint8_t reed, uint8_t tamp) {
+static uint8_t build_packet(uint8_t *pkt, uint8_t reed, uint8_t tamp,
+                            uint16_t vdd) {
 
   pkt[0] = DEVICE_ID[0];
   pkt[1] = DEVICE_ID[1];
   pkt[2] = DEVICE_ID[2];
   pkt[3] = DEVICE_ID[3];
-  pkt[4] = tamp; /* tamper switch */
-  pkt[5] = reed; /* reed switch */
+  pkt[4] = tamp;                  /* tamper switch */
+  pkt[5] = reed;                  /* reed switch */
+  pkt[6] = (uint8_t)(vdd >> 8);   /* battery mV high */
+  pkt[7] = (uint8_t)(vdd & 0xFF); /* battery mV low */
   uint8_t chk = 0;
-  for (uint8_t i = 0; i < 6; i++)
+  for (uint8_t i = 0; i < 8; i++)
     chk ^= pkt[i];
-  pkt[6] = chk;
+  pkt[8] = chk;
 
   return PKT_LEN;
 }
@@ -187,9 +236,10 @@ void R_MAIN_UserInit(void) {
   P2_bit.no0 = 0;
 }
 
-static void send_status(const char *reason, uint8_t reed, uint8_t tamp) {
+static void send_status(const char *reason, uint8_t reed, uint8_t tamp,
+                        uint16_t vdd) {
   uint8_t pkt[PKT_LEN];
-  build_packet(pkt, reed, tamp);
+  build_packet(pkt, reed, tamp, vdd);
 
   R_CSI00_Start(); /* wake SPI */
   cc1101_wakeup(); /* wake CC1101 from sleep */
@@ -200,10 +250,12 @@ static void send_status(const char *reason, uint8_t reed, uint8_t tamp) {
 #ifdef DEBUG
   uartsw_puts(reason);
   uartsw_puts(" T:");
-  uartsw_puthex(pkt[4]);
+  uartsw_puthex(tamp);
   uartsw_puts(" R:");
-  uartsw_puthex(pkt[5]);
-  uartsw_puts("\r\n");
+  uartsw_puthex(reed);
+  uartsw_puts(" V:");
+  uartsw_putd16(vdd);
+  uartsw_puts(" mV\r\n");
 #endif
 }
 
@@ -224,22 +276,24 @@ void INT_IT(void) {
   /* Disable pull-up after all reads/sends are done */
   P2_bit.no0 = 0;
 
+  uint16_t vdd = read_vdd_mv();
+
   /* Send on change (pull-up stays on so build_packet reads correct values) */
   if (reed != prev_reed) {
     prev_reed = reed;
-    send_status("REED", reed, tamp);
+    send_status("REED", reed, tamp, vdd);
     hb_count = 0;
   }
   if (tamp != prev_tamp) {
     prev_tamp = tamp;
-    send_status("TAMP", reed, tamp);
+    send_status("TAMP", reed, tamp, vdd);
     hb_count = 0;
   }
 
   /* Heartbeat every 5 min (600 × 500ms) */
   if (++hb_count >= (STATUS_INTERVAL_MS / 500)) {
     hb_count = 0;
-    send_status("HB", prev_reed, prev_tamp);
+    send_status("HB", prev_reed, prev_tamp, vdd);
   }
 }
 

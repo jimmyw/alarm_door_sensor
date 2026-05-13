@@ -46,6 +46,21 @@ int uartsw_puthex(unsigned char c) {
   return 2;
 }
 
+int uartsw_putd16(int16_t n) {
+  char buf[6]; /* -32768\0 */
+  char *p = buf + sizeof(buf) - 1;
+  *p = '\0';
+  uint16_t un = (n < 0) ? -n : n;
+  do {
+    *--p = '0' + (un % 10);
+    un /= 10;
+  } while (un > 0);
+  if (n < 0) {
+    *--p = '-';
+  }
+  return uartsw_puts(p);
+}
+
 int uartsw_puts(const char *s) {
   while ('\0' != *s) {
     (void)uartsw_putchar(*s++);
