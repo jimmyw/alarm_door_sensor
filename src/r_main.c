@@ -261,7 +261,8 @@ static void send_status(const char *reason, uint8_t reed, uint8_t tamp,
 
 /* IT interrupt handler — 500ms tick, polls switch pins */
 void INT_IT(void) {
-  static uint16_t hb_count = 0;
+  static uint16_t hb_count =
+      INT16_MAX; /* force immediate heartbeat on startup */
 
   /* Enable pull-up and let it settle (~50µs) */
   P2_bit.no0 = 1;
