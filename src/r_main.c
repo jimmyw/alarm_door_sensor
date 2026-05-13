@@ -52,7 +52,7 @@ Global variables and functions
 /* End user code. Do not edit comment generated here */
 
 /* Unique device serial number — change per device */
-static const uint8_t DEVICE_ID[4] = {0xDE, 0xAD, 0x00, 0x01};
+static const uint8_t DEVICE_ID[4] = {0xDE, 0xAD, 0x00, 0x02};
 /* Previous pin states for change detection */
 static uint8_t prev_reed = 0;
 static uint8_t prev_tamp = 0;
@@ -277,24 +277,26 @@ void INT_IT(void) {
   /* Disable pull-up after all reads/sends are done */
   P2_bit.no0 = 0;
 
-  uint16_t vdd = read_vdd_mv();
-
   /* Send on change (pull-up stays on so build_packet reads correct values) */
-  if (reed != prev_reed) {
-    prev_reed = reed;
-    send_status("REED", reed, tamp, vdd);
-    hb_count = 0;
-  }
-  if (tamp != prev_tamp) {
-    prev_tamp = tamp;
-    send_status("TAMP", reed, tamp, vdd);
-    hb_count = 0;
+  const char *reason = NULL;
+
+  if (reed != prev_reed && tamp != prev_tamp) {
+    reason = "REED+TAMP";
+  } else if (reed != prev_reed) {
+    reason = "REED";
+  } else if (tamp != prev_tamp) {
+    reason = "TAMP";
+  } else if (hb_count >= (STATUS_INTERVAL_MS / 500)) {
+    /* Heartbeat every 5 min (600 × 500ms) */
+    reason = "HB";
   }
 
-  /* Heartbeat every 5 min (600 × 500ms) */
-  if (++hb_count >= (STATUS_INTERVAL_MS / 500)) {
+  if (reason) {
+    uint16_t vdd = read_vdd_mv();
+    send_status(reason, reed, tamp, vdd);
+    prev_reed = reed;
+    prev_tamp = tamp;
     hb_count = 0;
-    send_status("HB", prev_reed, prev_tamp, vdd);
   }
 }
 
