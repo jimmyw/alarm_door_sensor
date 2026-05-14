@@ -59,7 +59,8 @@ static uint8_t prev_tamp = 0;
 
 // With debug on, we use the led as uart.
 #define DEBUG
-#define STATUS_INTERVAL_MS 600000 // 5 minutes
+#define STATUS_INTERVAL_S 900 // 15 minutes
+#define IT_TICK_MS 273        // 4096/15kHz ≈ 273ms per tick
 
 /*
  * Measure VDD using the internal reference voltage (~1.45V).
@@ -208,10 +209,10 @@ void R_MAIN_UserInit(void) {
   ///* Enable clock to interval timer */
   TMKAEN = 1U; // PER0 bit5 — TAU-KA clock on
   //
-  ///* Configure Interval Timer for 500ms using LOCO @ 15kHz */make -C
+  ///* Configure Interval Timer for ~273ms using LOCO @ 15kHz */
   TMKAMK = 1U;            // mask IT interrupt while configuring
   TMKAIF = 0U;            // clear any pending flag
-  ITMC = 0x8000U | 7499U; // bit15=enable, lower 15 bits = compare value
+  ITMC = 0x8000U | 4095U; // bit15=enable, 12-bit max: 4096/15kHz ≈ 273ms
   TMKAMK = 0U;            // unmask — ready to fire
 
   PM4_bit.no1 = 1; /* P4.1 input — tamper switch */
@@ -286,8 +287,8 @@ void INT_IT(void) {
     reason = "REED";
   } else if (tamp != prev_tamp) {
     reason = "TAMP";
-  } else if (hb_count >= (STATUS_INTERVAL_MS / 500)) {
-    /* Heartbeat every 5 min (600 × 500ms) */
+  } else if (hb_count >= (STATUS_INTERVAL_S * 1000UL / IT_TICK_MS)) {
+    /* Heartbeat every ~10 min */
     reason = "HB";
   }
 
