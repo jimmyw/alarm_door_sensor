@@ -59,7 +59,7 @@ static uint8_t prev_tamp = 0;
 
 // With debug on, we use the led as uart.
 #define DEBUG
-#define STATUS_INTERVAL_MS 600000
+#define STATUS_INTERVAL_MS 600000 // 5 minutes
 
 /*
  * Measure VDD using the internal reference voltage (~1.45V).
@@ -297,6 +297,8 @@ void INT_IT(void) {
     prev_reed = reed;
     prev_tamp = tamp;
     hb_count = 0;
+  } else {
+    hb_count++;
   }
 }
 
